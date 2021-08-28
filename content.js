@@ -5,11 +5,6 @@ function inject(fn) {
 	document.documentElement.appendChild(script)
 
 }
-
-
-
-
-
 function checkKey(key){
     chrome.storage.local.get(['hwid'],function({hwid}){
 		if(!hwid) return
@@ -31,6 +26,18 @@ function checkKey(key){
 
     })
 }
+chrome.storage.local.get(['key'],function(data){
+	console.log('a')
+	if(data.key){
+		checkKey(data.key);
+	}
+})
+
+
+
+//linesplit
+
+
 
 function runAll(){
 	window.yummyacoAssets = (self)=>{
@@ -96,7 +103,7 @@ function runAll(){
 	}
 	window.addEventListener("load", function(){
 		const sheet = document.createElement('style')
-		sheet.innerHTML = `.yummy-button{height:30px;width:100%}.yummy-button>button{height:100%;width:100%}.yummy-button>button:hover{background-color:red}`;
+		sheet.innerHTML = `.yummy-button{overflow-x:hidden;color:black;height:30px;width:100%}.yummy-button>button{height:100%;width:100%}.yummy-button>button:hover{background-color:red}`;
 		document.body.appendChild(sheet);
 		window.yummyacoAssets = (self)=>{
 		console.log('aaa')
@@ -104,13 +111,4 @@ function runAll(){
 	}
 	});
 }
-
-
-chrome.storage.local.get(['key'],function(data){
-	console.log('a')
-	if(data.key){
-		checkKey(data.key);
-	}
-})
-
 

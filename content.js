@@ -1,9 +1,35 @@
 function inject(fn) {	
-	if(1){
-		const script = document.createElement('script')
-		script.text = `(${fn.toString()})();`
-		document.documentElement.appendChild(script)
-	}
+
+	const script = document.createElement('script')
+	script.text = `(${fn.toString()})();`
+	document.documentElement.appendChild(script)
+
+}
+
+
+
+
+
+function checkKey(key){
+    chrome.storage.local.get(['hwid'],function({hwid}){
+		if(!hwid) return
+
+		return fetch(`https://paranoia-auth-server.herokuapp.com/curie?key=${key}&hwid=${hwid}`).then(r=>{
+			r.json().then(t=>{
+				if(t.status === "success"){
+					inject(runAll)
+				} else if(t.status === "activated"){
+					alert('Key Already Activated')
+				} else if(t.status === "invalid"){
+					alert('Invalid Key')
+					chrome.storage.local.remove(["key"],function(){})
+				}
+			})
+		}).catch(e=>{
+			alert('Invalid Key')
+		})
+
+    })
 }
 
 function runAll(){
@@ -79,4 +105,12 @@ function runAll(){
 	});
 }
 
-inject(runAll)
+
+chrome.storage.local.get(['key'],function(data){
+	console.log('a')
+	if(data.key){
+		checkKey(data.key);
+	}
+})
+
+

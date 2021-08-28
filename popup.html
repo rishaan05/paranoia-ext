@@ -8,6 +8,7 @@
     <title>Paranoia</title>
     <link rel="stylesheet" href="external/bootstrap.min.css">
     <script src="external/kute.min.js"></script>
+
     <style>
         html,
         body {
@@ -26,20 +27,48 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 1;
+
         }
 
         .success-page {
+            color: white;
             display: none;
-            z-index: 1;
+        }
+
+        .row{
+            display:inline;
         }
 
         .waves{
             z-index: -1;
         }
 
+        .profile{
+            left: 0;
+            top: 0;
+            margin: 15px;
+            position: absolute;
+        }
+
+        .logout{
+            right: 0;
+            top: 0;
+            margin: 15px;
+            position: absolute;
+        }
+
+        .profile-picture{
+            padding: 0;
+            border-radius: 50%;
+            height: 50px;
+            width: 50px;
+        }
+
         #blob2 {
             display: none;
         }
+
     </style>
 
 
@@ -93,7 +122,7 @@
     <div class="fill parent-container login-page">
 
         <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="Key" aria-label="Recipient's username"
+            <input type="text" class="form-control" id="keyinput" placeholder="Key" aria-label="Recipient's username"
                 aria-describedby="basic-addon2">
             <div class="input-group-append">
                 <button class="btn btn-outline-primary" id="login" type="button">Login</button>
@@ -104,8 +133,18 @@
 
 
     <div class="fill parent-container success-page" >
-        cock
+        <div class="row profile">
+            <img class="profile-picture">
+            <span class="username"></span>
+        </div>
 
+
+        <div class="row logout">
+            <button class="btn btn-outline-primary" id="logout" type="button">Logout</button>
+
+        </div>
+
+        Successfully Logged In
     </div>
 
 

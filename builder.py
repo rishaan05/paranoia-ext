@@ -103,7 +103,7 @@ if(os.path.exists('dist.zip')):
     print('removing existing dist')
     os.remove('dist.zip')
 shutil.make_archive('dist', 'zip', 'dist')
-
+print('zipped folder')
 
     # if file.endswith('.js'):
     #     with open(file, 'r') as f:

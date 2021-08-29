@@ -1,5 +1,3 @@
-
-
 const pubkey = KEYUTIL.getKey(`-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDELqkIYbV6t7fryp8F0GpJSxtH
 cx/a1s+5iPSEZ2/2oPpkJYyrU87l5HAyDiTdc5zmz0sFBuPVAMYVs+jd0lNdYJsM
@@ -15,10 +13,19 @@ function inject(fn) {
 }
 
 
+function injectValues(values){
+	if(values){
+		const script = document.createElement('script')
+		let injectVal = ''
+		Object.entries(values).forEach(([name,value])=>injectVal += `window.yummyconfig.${name} = '${value}';`)
+		script.text = `(function(){${injectVal}})()`
+		document.documentElement.appendChild(script)
+	}
+}
 
 function checkKey(key){
 
-	chrome.storage.local.get(['hwid'],function({hwid}){
+	chrome.storage.local.get(['hwid','config'],function({hwid}){
 		if(!hwid) return
 		return fetch(`http://localhost:3000/curie?key=${key}&hwid=${hwid}`).then(r=>{
 
@@ -28,6 +35,7 @@ function checkKey(key){
 				if(KJUR.jws.JWS.verifyJWT(t.data, pubkey, {alg: ['RS256']})){
 					if(authData.status === "success"){
 						inject(runAll)
+						injectValues(data.config)
 					} else if(authData.status === "activated"){
 						alert('Key Already Activated')
 					} else if(authData.status === "invalid"){
@@ -46,7 +54,6 @@ function checkKey(key){
 
 
 chrome.storage.local.get(['key'],function(data){
-	console.log('a')
 	if(data.key){
 		checkKey(data.key);
 	}
@@ -66,6 +73,9 @@ function runAll(){
 		aco()
 	}
 
+	window.yummyacoAssets = (self)=>{
+		triggerOnPageChange(self.parentElement.parentElement.parentElement.parentElement.href,aco)
+	}
 	window.yummyacoVolume = (self)=>{
 		const urlEl = self.parentElement.parentElement.querySelector('a')
 		triggerOnPageChange(urlEl.href,aco)
@@ -89,7 +99,6 @@ function runAll(){
 			}
 		})
 		const pageButton = document.getElementsByClassName('TradeStation--main')[0]?.querySelector('button').parentElement
-		console.log(pageButton)
 		if(pageButton){
 			if(!pageButton.querySelector('.yummy-button')){
 				const button = document.createElement('div')
@@ -139,10 +148,7 @@ function runAll(){
 		const sheet = document.createElement('style')
 		sheet.innerHTML = `.yummy-button{overflow-x:hidden;background-color:#2181e3;height:50px;border-radius:5px;width:100%}.yummy-button>button{font-family:Poppins,sans-serif;font-size:20px;color:#fff;background-color:#2181e3;height:100%;width:100%}.yummy-button>button:hover{background-color:#1969b7}`;
 		document.body.appendChild(sheet);
-		window.yummyacoAssets = (self)=>{
-		console.log('aaa')
-		triggerOnPageChange(self.parentElement.parentElement.parentElement.parentElement.href,aco)
-	}
+
 	});
 }
 

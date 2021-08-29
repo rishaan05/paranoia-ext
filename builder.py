@@ -1,10 +1,9 @@
 import json
-import os
-import requests
+import os,requests
+
 from pathlib import Path
-import shutil
-import string
-import random
+
+import shutil,string,random,sys
 
 class PyObfuscator:
     def obfuscate(self, lines):
@@ -51,6 +50,10 @@ class PyObfuscator:
 files=os.listdir('.')
 output = 'dist'
 
+if(os.path.exists(output)):
+    print(output + " already exists, deleting")
+    shutil.rmtree(output)
+
 os.mkdir(output)
 for file in files:
     if not '.git' in file and not 'dist' in file and not 'builder' in file:
@@ -58,8 +61,12 @@ for file in files:
         if file.endswith(".js"):
             with open(file, 'r') as f:
                 lines = f.read()
+            
+                if(sys.argv[-1] == 'prod'):
+                    print('replacing api queries')
+                    lines = lines.replace('http://localhost:3000/', 'https://paranoia-auth-server.herokuapp.com/')
                 lines = lines.split('//linesplit')
-                print(len(lines))
+
                 final = ''
                 functionInject = False
                 for line in lines:
@@ -74,8 +81,11 @@ for file in files:
                         obfuscated = PyObfuscator().obfuscate(line)
                         final += obfuscated + '\n'
                 if functionInject:
+                    with open('./external/jsrsasign-all-min.js', 'r') as f:
+                        print('Injecting JSR')
+                        final = f.read() + '\n' + final
                     print('Injecting Function')
-                    final = final.replace('runAll',"()=>{" + functionInject + "}")
+                    final = final.replace('runAll',"function(){" + functionInject + "}")
 
                 with open(os.path.join(output, file), 'w') as f:
                     f.write(final)
@@ -88,7 +98,13 @@ for file in files:
             print('Coppied ' + file)
 
 
-    
+
+if(os.path.exists('dist.zip')):
+    print('removing existing dist')
+    os.remove('dist.zip')
+shutil.make_archive('dist', 'zip', 'dist')
+
+
     # if file.endswith('.js'):
     #     with open(file, 'r') as f:
     #         lines = f.readlines()

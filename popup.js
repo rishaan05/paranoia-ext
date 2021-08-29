@@ -1,3 +1,9 @@
+const pubkey = KEYUTIL.getKey(`-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDELqkIYbV6t7fryp8F0GpJSxtH
+cx/a1s+5iPSEZ2/2oPpkJYyrU87l5HAyDiTdc5zmz0sFBuPVAMYVs+jd0lNdYJsM
+6fVL73mDW9JGj58p6J+ZQ93eqUXbqzFk91RnxvZFgTMKxGBLf2BXxjZhGp0uRGm8
+Us2GjToTvxelHpl7vwIDAQAB
+-----END PUBLIC KEY-----`);
 chrome.storage.local.get(['hwid','key'],function(data){
     if(!data.hwid){
         chrome.storage.local.set({hwid: uuidv1()}, function() {
@@ -28,27 +34,32 @@ function checkKey(key){
 
 
         if(fetch.toString() === "function fetch() { [native code] }"){
-            return fetch(`https://paranoia-auth-server.herokuapp.com/curie?key=${key}&hwid=${hwid}`,{
+            return fetch(`http://localhost:3000/curie?key=${key}&hwid=${hwid}`,{
                 headers: {
                     'x-request-id':uuidv4()
                 },
             }).then(r=>{
+
+                
                 r.json().then(t=>{
-                    if(t.status === "success"){
-                        chrome.storage.local.set({key}, function() {});
-                        showSuccess(t.username,t.avatar)
-                    } else if(t.status === "activated"){
-                        alert('Key Already Activated')
-                    } else if(t.status === "invalid"){
-                        alert('Invalid Key')
-                        chrome.storage.local.remove(["key"],function(){})
+                    const authData = KJUR.jws.JWS.readSafeJSONString(b64utoutf8(t.data.split(".")[1]))
+                    if(KJUR.jws.JWS.verifyJWT(t.data, pubkey, {alg: ['RS256']})){
+                        if(authData.status === "success"){
+                            chrome.storage.local.set({key}, function() {});
+                            showSuccess(authData.username,authData.avatar)
+                        } else if(authData.status === "activated"){
+                            alert('Key Already Activated')
+                        } else if(authData.status === "invalid"){
+                            alert('Invalid Key')
+                            chrome.storage.local.remove(["key"],function(){})
+                        }
                     }
                 })
             }).catch(e=>{
                 alert('Invalid Key')
             })
         } else{
-            fetch(`https://paranoia-auth-server.herokuapp.com/curie?key=${key}&hwid=${hwid}`,{
+            fetch(`http://localhost:3000/curie?key=${key}&hwid=${hwid}`,{
                 headers: {
                     'x-request-id':uuidv1()
                 },

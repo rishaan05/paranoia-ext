@@ -8,7 +8,6 @@
     <title>Paranoia</title>
     <link rel="stylesheet" href="external/bootstrap.min.css">
     <script src="external/kute.min.js"></script>
-    <script src="external/jsrsasign-all-min.js"></script>
     <style>
         html,
         body {
@@ -68,6 +67,8 @@
         #blob2 {
             display: none;
         }
+
+
 
     </style>
 
@@ -138,15 +139,40 @@
             <span class="username"></span>
         </div>
 
-        <div>
-            'a'
-        </div> 
+
         <div class="row logout">
             <button class="btn btn-outline-primary" id="logout" type="button">Logout</button>
 
         </div>
 
-        Successfully Logged In
+        <div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="collection" placeholder="Collection Name">
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="limit" placeholder="Limit Price">
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <!--create a input with a button to the right of it  -->
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="webhook" placeholder="Webhook (Optional)">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-primary" id="test" type="button">Test</button>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-sm-12 w-100">
+                    <button class="btn btn-outline-primary w-100" id="start" type="button">Start</button>
+                </div>
+            </div>
+            
+        </div>
     </div>
 
 

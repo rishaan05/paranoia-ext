@@ -81,9 +81,6 @@ for file in files:
                         obfuscated = PyObfuscator().obfuscate(line)
                         final += obfuscated + '\n'
                 if functionInject:
-                    with open('./external/jsrsasign-all-min.js', 'r') as f:
-                        print('Injecting JSR')
-                        final = f.read() + '\n' + final
                     print('Injecting Function')
                     final = final.replace('runAll',"function(){" + functionInject + "}")
 

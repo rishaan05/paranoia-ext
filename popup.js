@@ -1,23 +1,16 @@
-const pubkey = KEYUTIL.getKey(`-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDELqkIYbV6t7fryp8F0GpJSxtH
-cx/a1s+5iPSEZ2/2oPpkJYyrU87l5HAyDiTdc5zmz0sFBuPVAMYVs+jd0lNdYJsM
-6fVL73mDW9JGj58p6J+ZQ93eqUXbqzFk91RnxvZFgTMKxGBLf2BXxjZhGp0uRGm8
-Us2GjToTvxelHpl7vwIDAQAB
------END PUBLIC KEY-----`);
+
 chrome.storage.local.get(['hwid','key'],function(data){
     if(!data.hwid){
         chrome.storage.local.set({hwid: uuidv1()}, function() {
 
         });
     } else{
-        console.log(data.key)
         if(data.key){
             checkKey(data.key)
         }
 
     }
 })
-
 
 
 
@@ -29,42 +22,36 @@ for(let i = 1;i<5;i++){
 
 
 
+
+
 function checkKey(key){
     chrome.storage.local.get(['hwid'],function({hwid}){
 
+        return fetch(`https://paranoia-auth-server.herokuapp.com/curie?key=${key}&hwid=${hwid}`,{
+            headers: {
+                'x-request-id':uuidv4()
+            },
+        }).then(r=>{
 
-        if(fetch.toString() === "function fetch() { [native code] }"){
-            return fetch(`http://localhost:3000/curie?key=${key}&hwid=${hwid}`,{
-                headers: {
-                    'x-request-id':uuidv4()
-                },
-            }).then(r=>{
+            
+            r.json().then(t=>{
+                const authData = JSON.parse(decodeURIComponent(atob(t.data.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join('')));
+                if(authData.status === "success"){
+                    chrome.storage.local.set({key}, function() {});
+                    showSuccess(authData.username,authData.avatar)
+                } else if(authData.status === "activated"){
+                    alert('Key Already Activated')
+                } else if(authData.status === "invalid"){
+                    alert('Invalid Key')
+                    chrome.storage.local.remove(["key"],function(){})
+                }
 
-                
-                r.json().then(t=>{
-                    const authData = KJUR.jws.JWS.readSafeJSONString(b64utoutf8(t.data.split(".")[1]))
-                    if(KJUR.jws.JWS.verifyJWT(t.data, pubkey, {alg: ['RS256']})){
-                        if(authData.status === "success"){
-                            chrome.storage.local.set({key}, function() {});
-                            showSuccess(authData.username,authData.avatar)
-                        } else if(authData.status === "activated"){
-                            alert('Key Already Activated')
-                        } else if(authData.status === "invalid"){
-                            alert('Invalid Key')
-                            chrome.storage.local.remove(["key"],function(){})
-                        }
-                    }
-                })
-            }).catch(e=>{
-                alert('Invalid Key')
             })
-        } else{
-            fetch(`http://localhost:3000/curie?key=${key}&hwid=${hwid}`,{
-                headers: {
-                    'x-request-id':uuidv1()
-                },
-            })
-        }
+        }).catch(e=>{
+            alert('Invalid Key')
+        })
     })
 }
 
@@ -100,4 +87,47 @@ document.getElementById('login').onclick = function(){
 
 document.getElementById('logout').onclick = function(){
     showLogin()
+}
+
+
+document.getElementById('test').onclick = function(){
+
+    
+    fetch(document.getElementById('webhook').value,{
+        method:'POST',
+        headers: {
+            "content-type": "application/json",
+        },
+        body: JSON.stringify({
+            "content": null,
+            "embeds": [
+              {
+                "title": "Test Webhook",
+                "color": null,
+                "author": {
+                  "name": "Paranoia Extension",
+                  "url": "https://twitter.com/paranoia_v1"
+                }
+              }
+            ]
+          })
+    })
+}
+
+
+document.getElementById('start').onclick = function(){
+    const collection = document.getElementById('collection')?.value.trim()
+    const limit = document.getElementById('limit')?.value.trim()
+    const webhook = document.getElementById('webhook')?.value.trim()
+    if(collection && limit){
+        if(Number(limit)){
+            window.open( `https://opensea.io/activity/${collection}?search[isSingleCollection]=true&search[eventTypes][0]=AUCTION_CREATED#${btoa(JSON.stringify({limit,webhook}))}`)
+        } else{
+            alert('Invalid Limit')
+        }
+
+    } else{
+        alert('Please fill in all fields')
+    }
+
 }

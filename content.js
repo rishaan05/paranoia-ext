@@ -1,9 +1,3 @@
-const pubkey = KEYUTIL.getKey(`-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDELqkIYbV6t7fryp8F0GpJSxtH
-cx/a1s+5iPSEZ2/2oPpkJYyrU87l5HAyDiTdc5zmz0sFBuPVAMYVs+jd0lNdYJsM
-6fVL73mDW9JGj58p6J+ZQ93eqUXbqzFk91RnxvZFgTMKxGBLf2BXxjZhGp0uRGm8
-Us2GjToTvxelHpl7vwIDAQAB
------END PUBLIC KEY-----`);
 
 
 function inject(fn) {	
@@ -13,35 +7,28 @@ function inject(fn) {
 }
 
 
-function injectValues(values){
-	if(values){
-		const script = document.createElement('script')
-		let injectVal = ''
-		Object.entries(values).forEach(([name,value])=>injectVal += `window.yummyconfig.${name} = '${value}';`)
-		script.text = `(function(){${injectVal}})()`
-		document.documentElement.appendChild(script)
-	}
-}
 
 function checkKey(key){
 
-	chrome.storage.local.get(['hwid','config'],function({hwid}){
+	chrome.storage.local.get(['hwid','config','cache'],function({hwid}){
+
+		const cache = localStorage.getItem('cache')
+		if(cache && (Date.now() - cache) < 45000){
+			return inject(runAll)
+		}
+
 		if(!hwid) return
-		return fetch(`http://localhost:3000/curie?key=${key}&hwid=${hwid}`).then(r=>{
-
-
+		return fetch(`https://paranoia-auth-server.herokuapp.com/curie?key=${key}&hwid=${hwid}`).then(r=>{
 			r.json().then(t=>{
-				const authData = KJUR.jws.JWS.readSafeJSONString(b64utoutf8(t.data.split(".")[1]))
-				if(KJUR.jws.JWS.verifyJWT(t.data, pubkey, {alg: ['RS256']})){
-					if(authData.status === "success"){
-						inject(runAll)
-						injectValues(data.config)
-					} else if(authData.status === "activated"){
-						alert('Key Already Activated')
-					} else if(authData.status === "invalid"){
-						alert('Invalid Key')
-						chrome.storage.local.remove(["key"],function(){})
-					}
+				const authData = JSON.parse(decodeURIComponent(atob(t.data.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);}).join('')));
+				if(authData.status === "success"){
+					inject(runAll)
+					localStorage.setItem('cache',Date.now())
+				} else if(authData.status === "activated"){
+					alert('Key Already Activated')
+				} else if(authData.status === "invalid"){
+					alert('Invalid Key')
+					chrome.storage.local.remove(["key"],function(){})
 				}
 			})
 		}).catch(e=>{
@@ -71,6 +58,11 @@ function runAll(){
 	}
 	window.yummyPageAco = ()=>{
 		aco()
+	}
+
+	window.yummyListingAco = (self)=>{
+		self.parentElement.parentElement.querySelector('button[data-testid=OrderCheckoutButton]').click()
+		listingaco()
 	}
 
 	window.yummyacoAssets = (self)=>{
@@ -108,6 +100,26 @@ function runAll(){
 			}
 
 		}
+
+		const listingButtons = document.querySelectorAll('button[data-testid=OrderCheckoutButton]')
+		if(listingButtons){
+			[...listingButtons].forEach(el => {
+				const parent = el?.parentElement?.parentElement?.parentElement?.parentElement
+				if(parent){
+					if(!parent.querySelector('.short-yummy-button')){
+						const button = document.createElement('div')
+						button.height = "10px"
+						button.className = "short-yummy-button"
+						button.innerHTML = `<button onclick="window.yummyListingAco(this)">QuickPurchase</button>`
+						parent.appendChild(button)
+
+					}
+				
+				}
+			})
+		}
+		
+			
 	}
 	function reviewInfo(){
 		const btn = document.getElementById('review-confirmation')
@@ -134,6 +146,11 @@ function runAll(){
 		reviewInfo()
 		clickLoop('checkout')
 	}
+
+	function listingaco(){
+		reviewInfo()
+		clickLoop('checkout')
+	}
 	setInterval(addButtons,100)
 	function triggerOnPageChange(url,callback){
 		if(url === window.location.href){
@@ -144,10 +161,141 @@ function runAll(){
 			triggerOnPageChange(url,callback)
 		},100)
 	}
+
+
+	function notify(webhookURL,{name,url,price,image}){
+
+		fetch(webhookURL,{
+			method:'POST',
+			headers: {
+				"content-type": "application/json",
+			},
+			body: JSON.stringify({
+				"content": null,
+				"embeds": [
+				  {
+					"title": "Product Found",
+					"color": 16711423,
+					"fields": [
+					  {
+						"name": "Item",
+						"value": `[${name}](${url})`,
+						"inline": true
+					  },
+					  {
+						"name": "Price",
+						"value": price,
+						"inline": true
+					  }
+					],
+					"author": {
+					  "name": "Paranoia",
+					  "url": "https://twitter.com/paranoia_v1"
+					},
+					"footer": {
+					  "text": "Paranoia | v1.0",
+					  "icon_url": "https://pbs.twimg.com/profile_images/1415955135843295233/QbJqhIyh_400x400.jpg"
+					},
+					"thumbnail": {
+					  "url": image
+					}
+				  }
+				]
+			  })
+		})
+		
+	}
+
+
+	async function listingMode(limit,webhookURL){
+		const scrollbox = document.getElementsByClassName('Scrollboxreact__DivContainer-sc-1b04elr-0 ddtCpj EventHistory--container ActivitySearch--event-history-scrollbox')[0].querySelector('.Scrollbox--content')
+
+		let listings = [...document.getElementsByClassName('Rowreact__DivContainer-sc-amt98e-0 emCxyQ  EventHistory--row')]
+		while(listings.length < 20){
+			listings = [...document.getElementsByClassName('Rowreact__DivContainer-sc-amt98e-0 emCxyQ  EventHistory--row')]
+			scrollbox.scrollBy(0,250)
+			await new Promise(resolve => setTimeout(resolve, 150));
+		}
+		if(listings.some(el=>{
+			if(el.querySelector('.Price--eth-icon')){
+				const price = el.querySelector('.Price--amount').innerText
+				if(Number(price)<Number(limit)){
+					if(webhookURL){	
+						notify(webhookURL,{
+							name: el.querySelector('.AssetCell--name').innerText,
+							url: el.querySelector('.AssetCell--link').href,
+							price: price,
+							image: el.querySelector('.Image--image').src
+						})
+					}
+					el.querySelector('.yummy-button').querySelector('button').click()
+					return true
+				}
+
+			}
+	
+
+		})){return}
+		
+
+		setTimeout(function(){
+			window.location.reload()
+		}, 1000);
+
+
+	}
 	window.addEventListener("load", function(){
 		const sheet = document.createElement('style')
-		sheet.innerHTML = `.yummy-button{overflow-x:hidden;background-color:#2181e3;height:50px;border-radius:5px;width:100%}.yummy-button>button{font-family:Poppins,sans-serif;font-size:20px;color:#fff;background-color:#2181e3;height:100%;width:100%}.yummy-button>button:hover{background-color:#1969b7}`;
+		sheet.innerHTML = `
+		
+		
+		.short-yummy-button {
+			overflow-x: hidden;
+			background-color: #2181e3;
+			height: 25px;
+			border-radius: 5px;
+			width: 100px;
+		}
+		
+		.short-yummy-button>button {
+			font-family: Poppins, sans-serif;
+			font-size: 10px;
+			color: #fff;
+			background-color: #2181e3;
+			height: 100%;
+			width: 100%
+		}
+		
+		.short-yummy-button>button:hover {
+			background-color: #1969b7
+		}
+
+		.yummy-button {
+			overflow-x: hidden;
+			background-color: #2181e3;
+			height: 50px;
+			border-radius: 5px;
+			width: 100%
+		}
+		
+		.yummy-button>button {
+			font-family: Poppins, sans-serif;
+			font-size: 20px;
+			color: #fff;
+			background-color: #2181e3;
+			height: 100%;
+			width: 100%
+		}
+		
+		.yummy-button>button:hover {
+			background-color: #1969b7
+		}`;
 		document.body.appendChild(sheet);
+		try{
+			const config = JSON.parse(atob(window.location.hash.substr(1)));
+			listingMode(config.limit,config.webhook)
+		}catch(e){}
+
 
 	});
 }

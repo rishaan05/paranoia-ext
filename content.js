@@ -221,7 +221,7 @@ function runAll(){
 				const price = el.querySelector('.Price--amount').innerText
 				const timestamp = el.querySelector('div[data-testid=EventTimestamp]').querySelector('span').innerText
 				if(timestamp.includes('a minute ago') || timestamp.includes('second')){
-					if(Number(price)<=Number(limit)){
+					if(Number(price.replaceAll(',','.'))<=Number(limit)){
 						if(webhookURL){	
 							notify(webhookURL,{
 								name: el.querySelector('.AssetCell--name').innerText,

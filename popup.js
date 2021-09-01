@@ -121,7 +121,7 @@ document.getElementById('start').onclick = function(){
     const webhook = document.getElementById('webhook')?.value.trim()
     if(collection && limit){
         if(Number(limit)){
-            window.open( `https://opensea.io/activity/${collection}?search[isSingleCollection]=true&search[eventTypes][0]=AUCTION_CREATED#${btoa(JSON.stringify({limit,webhook}))}`)
+            window.open( `https://opensea.io/activity/${collection.toLowerCase()}?search[isSingleCollection]=true&search[eventTypes][0]=AUCTION_CREATED#${btoa(JSON.stringify({limit,webhook}))}`)
         } else{
             alert('Invalid Limit')
         }

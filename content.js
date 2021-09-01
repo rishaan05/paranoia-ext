@@ -210,26 +210,29 @@ function runAll(){
 	async function listingMode(limit,webhookURL){
 		const scrollbox = document.getElementsByClassName('Scrollboxreact__DivContainer-sc-1b04elr-0 ddtCpj EventHistory--container ActivitySearch--event-history-scrollbox')[0].querySelector('.Scrollbox--content')
 
-		let listings = [...document.getElementsByClassName('Rowreact__DivContainer-sc-amt98e-0 emCxyQ  EventHistory--row')]
-		while(listings.length < 20){
-			listings = [...document.getElementsByClassName('Rowreact__DivContainer-sc-amt98e-0 emCxyQ  EventHistory--row')]
+		let listings = [...document.getElementsByClassName('EventHistory--row')]
+		while(listings.length < 10){
+			listings = [...document.getElementsByClassName('EventHistory--row')]
 			scrollbox.scrollBy(0,250)
 			await new Promise(resolve => setTimeout(resolve, 150));
 		}
 		if(listings.some(el=>{
 			if(el.querySelector('.Price--eth-icon')){
 				const price = el.querySelector('.Price--amount').innerText
-				if(Number(price)<Number(limit)){
-					if(webhookURL){	
-						notify(webhookURL,{
-							name: el.querySelector('.AssetCell--name').innerText,
-							url: el.querySelector('.AssetCell--link').href,
-							price: price,
-							image: el.querySelector('.Image--image').src
-						})
+				const timestamp = el.querySelector('div[data-testid=EventTimestamp]').querySelector('span').innerText
+				if(timestamp.includes('a minute ago') || timestamp.includes('second')){
+					if(Number(price)<=Number(limit)){
+						if(webhookURL){	
+							notify(webhookURL,{
+								name: el.querySelector('.AssetCell--name').innerText,
+								url: el.querySelector('.AssetCell--link').href,
+								price: price,
+								image: el.querySelector('.Image--image').src
+							})
+						}
+						el.querySelector('.yummy-button').querySelector('button').click()
+						return true
 					}
-					el.querySelector('.yummy-button').querySelector('button').click()
-					return true
 				}
 
 			}

@@ -13,7 +13,7 @@ function checkKey(key){
 	chrome.storage.local.get(['hwid','config','cache'],function({hwid}){
 
 		const cache = localStorage.getItem('cache')
-		if(cache && (Date.now() - cache) < 45000){
+		if(cache && (Date.now() - cache) < 60000){
 			return inject(runAll)
 		}
 
@@ -26,6 +26,8 @@ function checkKey(key){
 					localStorage.setItem('cache',Date.now())
 				} else if(authData.status === "activated"){
 					alert('Key Already Activated')
+					chrome.storage.local.remove(["key"],function(){})
+
 				} else if(authData.status === "invalid"){
 					alert('Invalid Key')
 					chrome.storage.local.remove(["key"],function(){})
@@ -53,71 +55,67 @@ chrome.storage.local.get(['key'],function(data){
 
 
 function runAll(){
-	window.yummyacoAssets = (self)=>{
-		triggerOnPageChange(self.parentElement.parentElement.parentElement.parentElement.href,aco)
+	window.assetQuickPurchase = (self)=>{
+		triggerOnPageChange(self.parentElement.href,aco)
 	}
-	window.yummyPageAco = ()=>{
+	window.onPageQuickPurchase = ()=>{
 		aco()
 	}
 
-	window.yummyListingAco = (self)=>{
-		self.parentElement.parentElement.querySelector('button[data-testid=OrderCheckoutButton]').click()
-		listingaco()
-	}
+	// window.yummyListingAco = (self)=>{
+	// 	self.parentElement.parentElement.querySelector('button[data-testid=OrderCheckoutButton]').click()
+	// 	listingaco()
+	// }
 
-	window.yummyacoAssets = (self)=>{
-		triggerOnPageChange(self.parentElement.parentElement.parentElement.parentElement.href,aco)
-	}
-	window.yummyacoVolume = (self)=>{
+
+	window.volumeQuickPurchase = (self)=>{
 		const urlEl = self.parentElement.parentElement.querySelector('a')
 		triggerOnPageChange(urlEl.href,aco)
 		urlEl.click()
 	}
 	function addButtons(){
 		Array.from(document.getElementsByClassName('AssetCardFooter--annotations')).forEach(el => {
-			if (!el.querySelector('.yummy-button')) {
-				const button = document.createElement('div')
-				button.className = "yummy-button"
-				button.innerHTML = `<button onclick="window.yummyacoAssets(this)">QuickPurchase</button>`
-				el.appendChild(button)
+			if (!el.parentElement.parentElement.parentElement.querySelector('.paranoia-button')) {
+				const className = 'paranoia-button'
+				el.parentNode.insertAdjacentHTML('beforebegin',`<button class="${className}" onclick="window.assetQuickPurchase(this)">QuickPurchase</button>`)
 			}
 		})
 		Array.from(document.getElementsByClassName('Row--cell Row--cellIsSpaced EventHistory--item-col')).slice(1).forEach(el => {
-			if (!el.querySelector('.yummy-button')) {
-				const button = document.createElement('div')
-				button.className = "yummy-button"
-				button.innerHTML = `<button onclick="window.yummyacoVolume(this)">QuickPurchase</button>`
-				el.appendChild(button)
+			if (!el.querySelector('.paranoia-button')) {
+				const className = 'paranoia-button'
+
+				el.insertAdjacentHTML('beforeend',`<button class="${className}" onclick="window.volumeQuickPurchase(this)">QuickPurchase</button>`)
+
 			}
 		})
-		const pageButton = document.getElementsByClassName('TradeStation--main')[0]?.querySelector('button').parentElement
+
+		const pageButton = document.querySelector('.TradeStation--price-container')
 		if(pageButton){
-			if(!pageButton.querySelector('.yummy-button')){
-				const button = document.createElement('div')
-				button.className = "yummy-button"
-				button.innerHTML = `<button onclick="window.yummyPageAco(this)">QuickPurchase</button>`
-				pageButton.appendChild(button)
+			if(!pageButton.parentElement.querySelector('.paranoia-button')){
+				const className = 'paranoia-button'
+				pageButton.insertAdjacentHTML('afterend',`<button class="${className}" onclick="window.onPageQuickPurchase()">QuickPurchase</button>`)
+				
 			}
 
 		}
 
-		const listingButtons = document.querySelectorAll('button[data-testid=OrderCheckoutButton]')
-		if(listingButtons){
-			[...listingButtons].forEach(el => {
-				const parent = el?.parentElement?.parentElement?.parentElement?.parentElement
-				if(parent){
-					if(!parent.querySelector('.short-yummy-button')){
-						const button = document.createElement('div')
-						button.height = "10px"
-						button.className = "short-yummy-button"
-						button.innerHTML = `<button onclick="window.yummyListingAco(this)">QuickPurchase</button>`
-						parent.appendChild(button)
+		// const listingButtons = document.querySelectorAll('button[data-testid=OrderCheckoutButton]')
+		// if(listingButtons){
+		// 	[...listingButtons].forEach(el => {
+		// 		const parent = el?.parentElement?.parentElement?.parentElement?.parentElement
+		// 		if(parent){
+		// 			if(!parent.querySelector('.short-yummy-button')){
+		// 				const button = document.createElement('div')
+		// 				button.height = "10px"
+		// 				button.className = "short-yummy-button"
+		// 				button.innerHTML = `<button onclick="window.yummyListingAco(this)">QuickPurchase</button>`
+		// 				parent.appendChild(button)
 
-					}
+		// 			}
 				
-				}
-			})
-		}
+		// 		}
+		// 	})
+		// }
 		
 			
 	}
@@ -147,10 +145,10 @@ function runAll(){
 		clickLoop('checkout')
 	}
 
-	function listingaco(){
-		reviewInfo()
-		clickLoop('checkout')
-	}
+	// function listingaco(){
+	// 	reviewInfo()
+	// 	clickLoop('checkout')
+	// }
 	setInterval(addButtons,100)
 	function triggerOnPageChange(url,callback){
 		if(url === window.location.href){
@@ -230,7 +228,7 @@ function runAll(){
 								image: el.querySelector('.Image--image').src
 							})
 						}
-						el.querySelector('.yummy-button').querySelector('button').click()
+						el.querySelector('.paranoia-button').click()
 						return true
 					}
 				}
@@ -247,53 +245,64 @@ function runAll(){
 
 
 	}
-	window.addEventListener("load", function(){
-		const sheet = document.createElement('style')
-		sheet.innerHTML = `
-		
-		
-		.short-yummy-button {
-			overflow-x: hidden;
-			background-color: #2181e3;
-			height: 25px;
-			border-radius: 5px;
-			width: 100px;
-		}
-		
-		.short-yummy-button>button {
-			font-family: Poppins, sans-serif;
-			font-size: 10px;
-			color: #fff;
-			background-color: #2181e3;
-			height: 100%;
-			width: 100%
-		}
-		
-		.short-yummy-button>button:hover {
-			background-color: #1969b7
-		}
+	const sheet = document.createElement('style')
+	sheet.innerHTML = `
+	.paranoia-button{
+		box-sizing: border-box;
+		font: inherit;
+		-webkit-box-align: center;
+		align-items: center;
+		border-radius: 5px;
+		-webkit-box-pack: center;
+		justify-content: center;
+		font-size: 16px;
+		font-weight: 600;
+		padding: 12px 20px;
+		background-color: rgb(32, 129, 226);
+		border: 1px solid rgb(32, 129, 226);
+		color: white;
+		margin-top: 8px;
+		margin-bottom: 8px;
+		width: 100%;
 
-		.yummy-button {
-			overflow-x: hidden;
-			background-color: #2181e3;
-			height: 50px;
-			border-radius: 5px;
-			width: 100%
-		}
+	}
+	
+
+	.paranoia-button:hover{
+		transition: all 0.2s ease 0s;
+		color: purple;
+		opacity: 85%;
 		
-		.yummy-button>button {
-			font-family: Poppins, sans-serif;
-			font-size: 20px;
-			color: #fff;
-			background-color: #2181e3;
-			height: 100%;
-			width: 100%
-		}
-		
-		.yummy-button>button:hover {
-			background-color: #1969b7
-		}`;
-		document.body.appendChild(sheet);
+	}
+
+
+	.paranoia-page-listing-button{
+		-webkit-text-size-adjust: 100%;
+		list-style-type: none;
+		white-space: nowrap;
+		box-sizing: border-box;
+		font: inherit;
+		margin: 0;
+		overflow: visible;
+		text-transform: none;
+		-webkit-appearance: button;
+		cursor: pointer;
+		display: inline-flex;
+		flex-direction: row;
+		-webkit-box-align: center;
+		align-items: center;
+		border-radius: 5px;
+		-webkit-box-pack: center;
+		justify-content: center;
+		font-size: 12px;
+		font-weight: 500;
+		padding: 10px 20px;
+		background-color: rgb(53, 56, 64);
+		border: 1px solid rgb(21, 27, 34);
+		color: rgb(229, 232, 235);
+	}`;
+	document.head.appendChild(sheet);
+	window.addEventListener("load", function(){
 		try{
 			const config = JSON.parse(atob(window.location.hash.substr(1)));
 			listingMode(config.limit,config.webhook)

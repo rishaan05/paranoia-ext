@@ -55,51 +55,55 @@ chrome.storage.local.get(['key'],function(data){
 
 
 function runAll(){
-	window.assetQuickPurchase = (self)=>{
+	window.assetQuickPurchase = (event,self)=>{
 		triggerOnPageChange(self.parentElement.href,aco)
+
 	}
 	window.onPageQuickPurchase = ()=>{
 		aco()
 	}
 
-	// window.yummyListingAco = (self)=>{
-	// 	self.parentElement.parentElement.querySelector('button[data-testid=OrderCheckoutButton]').click()
-	// 	listingaco()
-	// }
 
 
-	window.volumeQuickPurchase = (self)=>{
-		const urlEl = self.parentElement.parentElement.querySelector('a')
-		triggerOnPageChange(urlEl.href,aco)
-		urlEl.click()
+	window.volumeQuickPurchase = (event,self)=>{
+		const urlElement = self.parentElement.querySelector('a')
+		triggerOnPageChange(urlElement.href,aco)
+		urlElement.click()
+
 	}
-	function addButtons(){
+
+
+	function injectAssetsButtons(){
 		Array.from(document.getElementsByClassName('AssetCardFooter--annotations')).forEach(el => {
 			if (!el.parentElement.parentElement.parentElement.querySelector('.paranoia-button')) {
 				const className = 'paranoia-button'
-				el.parentNode.insertAdjacentHTML('beforebegin',`<button class="${className}" onclick="window.assetQuickPurchase(this)">QuickPurchase</button>`)
+				el.parentNode.insertAdjacentHTML('beforebegin',`<button class="${className}" onclick="window.assetQuickPurchase(event,this)">QuickPurchase</button>`)
 			}
 		})
+	}
+
+	function injectVolumeButtons(){
 		Array.from(document.getElementsByClassName('Row--cell Row--cellIsSpaced EventHistory--item-col')).slice(1).forEach(el => {
 			if (!el.querySelector('.paranoia-button')) {
 				const className = 'paranoia-button'
-
-				el.insertAdjacentHTML('beforeend',`<button class="${className}" onclick="window.volumeQuickPurchase(this)">QuickPurchase</button>`)
-
+				el.insertAdjacentHTML('beforeend',`<button class="${className}" onclick="window.volumeQuickPurchase(event,this)">QuickPurchase</button>`)
 			}
 		})
+	}
 
+	function injectOnPageButtons(){
 		const pageButton = document.querySelector('.TradeStation--price-container')
 		if(pageButton){
 			if(!pageButton.parentElement.querySelector('.paranoia-button')){
 				const className = 'paranoia-button'
 				pageButton.insertAdjacentHTML('afterend',`<button class="${className}" onclick="window.onPageQuickPurchase()">QuickPurchase</button>`)
-				
 			}
-
 		}
+	}
 
-		// const listingButtons = document.querySelectorAll('button[data-testid=OrderCheckoutButton]')
+	function injectListingButtons(){
+
+				// const listingButtons = document.querySelectorAll('button[data-testid=OrderCheckoutButton]')
 		// if(listingButtons){
 		// 	[...listingButtons].forEach(el => {
 		// 		const parent = el?.parentElement?.parentElement?.parentElement?.parentElement
@@ -116,7 +120,14 @@ function runAll(){
 		// 		}
 		// 	})
 		// }
-		
+	}
+
+	function addButtons(){
+
+		injectAssetsButtons()
+		injectVolumeButtons()
+		injectOnPageButtons()
+		injectListingButtons()
 			
 	}
 	function reviewInfo(){
@@ -303,6 +314,8 @@ function runAll(){
 	}`;
 	document.head.appendChild(sheet);
 	window.addEventListener("load", function(){
+
+
 		try{
 			const config = JSON.parse(atob(window.location.hash.substr(1)));
 			listingMode(config.limit,config.webhook)

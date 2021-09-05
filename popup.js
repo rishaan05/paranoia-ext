@@ -131,3 +131,27 @@ document.getElementById('start').onclick = function(){
     }
 
 }
+
+function saveChanges(){
+    const collection = document.getElementById('collection')?.value.trim()
+    const limit = document.getElementById('limit')?.value.trim()
+    const webhook = document.getElementById('webhook')?.value.trim()
+    chrome.storage.local.set({collection,limit,webhook}, function() {});
+}
+
+setInterval(saveChanges, 50);
+
+chrome.storage.local.get(['collection','limit','webhook'],function({collection,limit,webhook}){
+    if(collection){
+        document.getElementById('collection').value = collection
+    }
+    if(limit){
+        document.getElementById('limit').value = limit
+    }
+    if(webhook){
+        document.getElementById('webhook').value = webhook
+    }
+
+
+
+})

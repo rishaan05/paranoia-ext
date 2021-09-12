@@ -136,7 +136,8 @@ function saveChanges(){
     const collection = document.getElementById('collection')?.value.trim()
     const limit = document.getElementById('limit')?.value.trim()
     const webhook = document.getElementById('webhook')?.value.trim()
-    chrome.storage.local.set({collection,limit,webhook}, function() {});
+    const svsMode = document.getElementById('svsMode')?.checked
+    chrome.storage.local.set({collection,limit,webhook,svsMode}, function() {});
 }
 
 setInterval(saveChanges, 50);

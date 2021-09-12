@@ -172,6 +172,38 @@ function runAll(){
 	}
 
 
+
+
+	function addToStorage(href){
+
+		let itemCache = localStorage.getItem('paranoia-item-cache')
+		if(itemCache && itemCache.length < 10**6){
+			itemCache = JSON.parse(itemCache)
+			itemCache[href] = Date.now()
+			localStorage.setItem('paranoia-item-cache',JSON.stringify(itemCache))
+		} else{
+			localStorage.setItem('paranoia-item-cache',JSON.stringify({[href]:Date.now()}))
+		}
+
+	}
+
+
+	function checkInStorage(item){
+		let itemCache = localStorage.getItem('paranoia-item-cache')
+		if(itemCache){
+			// alert('Item in Cache')
+			itemCache = JSON.parse(itemCache)
+			const cachedItem = itemCache[item]
+			if(cachedItem && (Date.now() - cachedItem) < 240000 ){
+				return true			
+			}
+		}
+		addToStorage(item)
+		// alert('Item not in Cache')
+
+
+	}
+
 	function notify(webhookURL,{name,url,price,image}){
 
 		fetch(webhookURL,{
@@ -229,15 +261,13 @@ function runAll(){
 			if(el.querySelector('.Price--eth-icon')){
 				const price = el.querySelector('.Price--amount').innerText
 				const timestamp = el.querySelector('div[data-testid=EventTimestamp]').querySelector('span').innerText
-				if(timestamp.includes('a minute ago') || timestamp.includes('second')){
+				const name = el.querySelector('.AssetCell--name').innerText
+				const url = el.querySelector('.AssetCell--link').href
+				const image = el.querySelector('.Image--image').src
+				if((timestamp.includes('a minute ago') || timestamp.includes('second') && !checkInStorage(url))){
 					if(Number(price.replaceAll(',','.'))<=Number(limit)){
 						if(webhookURL){	
-							notify(webhookURL,{
-								name: el.querySelector('.AssetCell--name').innerText,
-								url: el.querySelector('.AssetCell--link').href,
-								price: price,
-								image: el.querySelector('.Image--image').src
-							})
+							notify(webhookURL,{name,url,price,image})
 						}
 						el.querySelector('.paranoia-button').click()
 						return true
@@ -252,7 +282,7 @@ function runAll(){
 
 		setTimeout(function(){
 			window.location.reload()
-		}, 1000);
+		}, 1500);
 
 
 	}

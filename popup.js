@@ -142,7 +142,7 @@ function saveChanges(){
 
 setInterval(saveChanges, 50);
 
-chrome.storage.local.get(['collection','limit','webhook'],function({collection,limit,webhook}){
+chrome.storage.local.get(['collection','limit','webhook','svsMode'],function({collection,limit,webhook,svsMode}){
     if(collection){
         document.getElementById('collection').value = collection
     }
@@ -152,7 +152,9 @@ chrome.storage.local.get(['collection','limit','webhook'],function({collection,l
     if(webhook){
         document.getElementById('webhook').value = webhook
     }
-
+    if(svsMode){
+        document.getElementById('svsMode').checked = svsMode
+    }
 
 
 })

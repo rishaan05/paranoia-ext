@@ -136,16 +136,12 @@ function saveChanges(){
     const collection = document.getElementById('collection')?.value.trim()
     const limit = document.getElementById('limit')?.value.trim()
     const webhook = document.getElementById('webhook')?.value.trim()
-    const svsMode = document.getElementById('svsMode')?.checked
-    // const svsMax = document.getElementById('svsMax')?.checked
-    // console.log(svsMode)
-    chrome.storage.local.set({collection,limit,webhook,svsMode}, function() {});
+    chrome.storage.local.set({collection,limit,webhook}, function() {});
 }
 
 setInterval(saveChanges, 50);
 
-chrome.storage.local.get(['collection','limit','webhook','svsMode',],function({collection,limit,webhook,svsMode}){
-    console.log(svsMode)
+chrome.storage.local.get(['collection','limit','webhook'],function({collection,limit,webhook}){
     if(collection){
         document.getElementById('collection').value = collection
     }
@@ -155,11 +151,5 @@ chrome.storage.local.get(['collection','limit','webhook','svsMode',],function({c
     if(webhook){
         document.getElementById('webhook').value = webhook
     }
-    if(svsMode){
-        document.getElementById('svsMode').checked = svsMode
-    }
-    // if(svsMax){
-    //     document.getElementById('svsMax').checked = svsMax
-    // }
 
 })

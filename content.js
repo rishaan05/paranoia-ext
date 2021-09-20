@@ -52,7 +52,7 @@ chrome.storage.local.get(['key'], function (data) {
 //linesplit
 
 
-function runAll() {
+function runAll(){
 	window.assetQuickPurchase = (event, self) => {
 		triggerOnPageChange(self.parentElement.href, aco)
 

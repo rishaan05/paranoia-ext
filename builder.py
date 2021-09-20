@@ -92,7 +92,7 @@ for file in files:
                     final = final.replace('runAll',"function(){" + functionInject + "}")
 
                 if('content.js' in file):
-                    r.set('latestscript',json.dumps({'version':'0.1','script':final}))
+                    r.set('latestscript',json.dumps({'version':'1.1','script':final}))
                     print('updated latest script on server')
                 
                     final = PyObfuscator().obfuscate("""

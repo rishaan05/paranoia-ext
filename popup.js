@@ -21,7 +21,17 @@ for(let i = 1;i<5;i++){
 }
 
 
-
+function checkUpdate(){
+    fetch('http://localhost:3000/latestscript').then(async (r)=>{
+        
+        const data = await r.json()
+        chrome.storage.local.set({latestscript:data.script}, function() {
+            document.getElementById('update').innerText = `Version: ${data.version}`
+        });
+        
+    
+    })
+}
 
 
 function checkKey(key){
@@ -90,6 +100,14 @@ document.getElementById('logout').onclick = function(){
 }
 
 
+document.getElementById('update').onclick = function(){
+    document.getElementById('update').innerText = 'Updating...'
+    checkUpdate()
+}
+
+
+
+
 document.getElementById('test').onclick = function(){
 
     
@@ -151,5 +169,9 @@ chrome.storage.local.get(['collection','limit','webhook'],function({collection,l
     if(webhook){
         document.getElementById('webhook').value = webhook
     }
+    
+    checkUpdate()
+
+
 
 })

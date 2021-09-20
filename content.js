@@ -1,6 +1,4 @@
-
-
-function inject(fn) {	
+function inject(fn) {
 	const script = document.createElement('script')
 	script.text = `(${fn.toString()})();`
 	document.documentElement.appendChild(script)
@@ -8,42 +6,42 @@ function inject(fn) {
 
 
 
-function checkKey(key){
+function checkKey(key) {
 
-	chrome.storage.local.get(['hwid','config','cache'],function({hwid}){
+	chrome.storage.local.get(['hwid', 'config', 'cache'], function ({ hwid }) {
 
 		const cache = localStorage.getItem('cache')
-		if(cache && (Date.now() - cache) < 60000){
+		if (cache && (Date.now() - cache) < 60000) {
 			return inject(runAll)
 		}
 
-		if(!hwid) return
-		return fetch(`https://paranoia-auth-server.herokuapp.com/curie?key=${key}&hwid=${hwid}`).then(r=>{
-			r.json().then(t=>{
-				const authData = JSON.parse(decodeURIComponent(atob(t.data.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);}).join('')));
-				if(authData.status === "success"){
+		if (!hwid) return
+		return fetch(`https://paranoia-auth-server.herokuapp.com/curie?key=${key}&hwid=${hwid}`).then(r => {
+			r.json().then(t => {
+				const authData = JSON.parse(decodeURIComponent(atob(t.data.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function (c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join('')));
+				if (authData.status === "success") {
 					inject(runAll)
-					localStorage.setItem('cache',Date.now())
-				} else if(authData.status === "activated"){
+					localStorage.setItem('cache', Date.now())
+				} else if (authData.status === "activated") {
 					alert('Key Already Activated')
-					chrome.storage.local.remove(["key"],function(){})
+					chrome.storage.local.remove(["key"], function () { })
 
-				} else if(authData.status === "invalid"){
+				} else if (authData.status === "invalid") {
 					alert('Invalid Key')
-					chrome.storage.local.remove(["key"],function(){})
+					chrome.storage.local.remove(["key"], function () { })
 				}
 			})
-		}).catch(e=>{
+		}).catch(e => {
 			alert('Invalid Key')
 		})
 
-    })
+	})
 
 }
 
 
-chrome.storage.local.get(['key'],function(data){
-	if(data.key){
+chrome.storage.local.get(['key'], function (data) {
+	if (data.key) {
 		checkKey(data.key);
 	}
 })
@@ -54,56 +52,56 @@ chrome.storage.local.get(['key'],function(data){
 //linesplit
 
 
-function runAll(){
-	window.assetQuickPurchase = (event,self)=>{
-		triggerOnPageChange(self.parentElement.href,aco)
+function runAll() {
+	window.assetQuickPurchase = (event, self) => {
+		triggerOnPageChange(self.parentElement.href, aco)
 
 	}
-	window.onPageQuickPurchase = ()=>{
+	window.onPageQuickPurchase = () => {
 		aco()
 	}
 
 
 
-	window.volumeQuickPurchase = (event,self)=>{
+	window.volumeQuickPurchase = (event, self) => {
 		const urlElement = self.parentElement.querySelector('a')
-		triggerOnPageChange(urlElement.href,aco)
+		triggerOnPageChange(urlElement.href, aco)
 		urlElement.click()
 
 	}
 
 
-	function injectAssetsButtons(){
+	function injectAssetsButtons() {
 		Array.from(document.getElementsByClassName('AssetCardFooter--annotations')).forEach(el => {
 			if (!el.parentElement.parentElement.parentElement.querySelector('.paranoia-button')) {
 				const className = 'paranoia-button'
-				el.parentNode.insertAdjacentHTML('beforebegin',`<button class="${className}" onclick="window.assetQuickPurchase(event,this)">QuickPurchase</button>`)
+				el.parentNode.insertAdjacentHTML('beforebegin', `<button class="${className}" onclick="window.assetQuickPurchase(event,this)">QuickPurchase</button>`)
 			}
 		})
 	}
 
-	function injectVolumeButtons(){
+	function injectVolumeButtons() {
 		Array.from(document.getElementsByClassName('Row--cell Row--cellIsSpaced EventHistory--item-col')).slice(1).forEach(el => {
 			if (!el.querySelector('.paranoia-button')) {
 				const className = 'paranoia-button'
-				el.insertAdjacentHTML('beforeend',`<button class="${className}" onclick="window.volumeQuickPurchase(event,this)">QuickPurchase</button>`)
+				el.insertAdjacentHTML('beforeend', `<button class="${className}" onclick="window.volumeQuickPurchase(event,this)">QuickPurchase</button>`)
 			}
 		})
 	}
 
-	function injectOnPageButtons(){
+	function injectOnPageButtons() {
 		const pageButton = document.querySelector('.TradeStation--price-container')
-		if(pageButton){
-			if(!pageButton.parentElement.querySelector('.paranoia-button')){
+		if (pageButton) {
+			if (!pageButton.parentElement.querySelector('.paranoia-button')) {
 				const className = 'paranoia-button'
-				pageButton.insertAdjacentHTML('afterend',`<button class="${className}" onclick="window.onPageQuickPurchase()">QuickPurchase</button>`)
+				pageButton.insertAdjacentHTML('afterend', `<button class="${className}" onclick="window.onPageQuickPurchase()">QuickPurchase</button>`)
 			}
 		}
 	}
 
-	function injectListingButtons(){
+	function injectListingButtons() {
 
-				// const listingButtons = document.querySelectorAll('button[data-testid=OrderCheckoutButton]')
+		// const listingButtons = document.querySelectorAll('button[data-testid=OrderCheckoutButton]')
 		// if(listingButtons){
 		// 	[...listingButtons].forEach(el => {
 		// 		const parent = el?.parentElement?.parentElement?.parentElement?.parentElement
@@ -116,41 +114,51 @@ function runAll(){
 		// 				parent.appendChild(button)
 
 		// 			}
-				
+
 		// 		}
 		// 	})
 		// }
 	}
 
-	function addButtons(){
+	function addButtons() {
 
 		injectAssetsButtons()
 		injectVolumeButtons()
 		injectOnPageButtons()
 		injectListingButtons()
-			
+
 	}
-	function reviewInfo(){
+	function reviewInfo() {
 		const btn = document.getElementById('review-confirmation')
-		try{
-			if(btn){
+		try {
+			if (btn) {
 				btn.click()
 				return
 			}
-		}catch{}
-		setTimeout(reviewInfo,50)
+		} catch { }
+		setTimeout(reviewInfo, 50)
 	}
-	function clickLoop(innerText){
-		const btn = [...document.querySelectorAll('button')].find(el=>el.innerText.toLowerCase().includes(innerText))
-		try{
-			if(btn){
+	function clickLoop(innerText) {
+		const btn = [...document.querySelectorAll('button')].find(el => el.innerText.toLowerCase().includes(innerText))
+		try {
+			if (btn) {
 				btn.click()
 				return
 			}
-		}catch{}
-		setTimeout(function(){clickLoop(innerText)},50)
+		} catch { }
+		setTimeout(function () { clickLoop(innerText) }, 50)
 	}
-	function aco(){
+	function checkUntilFound(selector){
+		const button = document.querySelector(selector)
+		if(button){
+			button.click()
+			return
+		} else {
+			setTimeout(function(){checkUntilFound(selector)},50)
+		}
+
+	}
+	function aco() {
 		clickLoop('buy now')
 		reviewInfo()
 		clickLoop('checkout')
@@ -160,130 +168,128 @@ function runAll(){
 	// 	reviewInfo()
 	// 	clickLoop('checkout')
 	// }
-	setInterval(addButtons,100)
-	function triggerOnPageChange(url,callback){
-		if(url === window.location.href){
+	setInterval(addButtons, 100)
+	function triggerOnPageChange(url, callback) {
+		if (url === window.location.href) {
 			callback()
 			return
 		}
-		setTimeout(function(){
-			triggerOnPageChange(url,callback)
-		},100)
+		setTimeout(function () {
+			triggerOnPageChange(url, callback)
+		}, 100)
 	}
 
 
 
 
-	function addToStorage(href){
-
+	function addToStorage(href) {
 		let itemCache = localStorage.getItem('paranoia-item-cache')
-		if(itemCache && itemCache.length < 10**6){
+		if (itemCache && itemCache.length < 10 ** 6) {
 			itemCache = JSON.parse(itemCache)
 			itemCache[href] = Date.now()
-			localStorage.setItem('paranoia-item-cache',JSON.stringify(itemCache))
-		} else{
-			localStorage.setItem('paranoia-item-cache',JSON.stringify({[href]:Date.now()}))
+			localStorage.setItem('paranoia-item-cache', JSON.stringify(itemCache))
+		} else {
+			localStorage.setItem('paranoia-item-cache', JSON.stringify({ [href]: Date.now() }))
 		}
 
 	}
 
 
-	function checkInStorage(item){
+	function checkInStorage(item) {
 		let itemCache = localStorage.getItem('paranoia-item-cache')
-		if(itemCache){
-			// alert('Item in Cache')
+		if (itemCache) {
 			itemCache = JSON.parse(itemCache)
 			const cachedItem = itemCache[item]
-			if(cachedItem && (Date.now() - cachedItem) < 240000 ){
-				return true			
+			if (cachedItem && (Date.now() - cachedItem) < 240000) {
+				addToStorage(item)
+				return true
 			}
 		}
 		addToStorage(item)
-		// alert('Item not in Cache')
-
-
 	}
 
-	function notify(webhookURL,{name,url,price,image}){
+	function notify(webhookURL, { name, url, price, image }) {
 
-		fetch(webhookURL,{
-			method:'POST',
+		fetch(webhookURL, {
+			method: 'POST',
 			headers: {
 				"content-type": "application/json",
 			},
 			body: JSON.stringify({
 				"content": null,
 				"embeds": [
-				  {
-					"title": "Product Found",
-					"color": 16711423,
-					"fields": [
-					  {
-						"name": "Item",
-						"value": `[${name}](${url})`,
-						"inline": true
-					  },
-					  {
-						"name": "Price",
-						"value": price,
-						"inline": true
-					  }
-					],
-					"author": {
-					  "name": "Paranoia",
-					  "url": "https://twitter.com/paranoia_v1"
-					},
-					"footer": {
-					  "text": "Paranoia | v1.0",
-					  "icon_url": "https://pbs.twimg.com/profile_images/1415955135843295233/QbJqhIyh_400x400.jpg"
-					},
-					"thumbnail": {
-					  "url": image
+					{
+						"title": "Product Found",
+						"color": 16711423,
+						"fields": [
+							{
+								"name": "Item",
+								"value": `[${name}](${url})`,
+								"inline": true
+							},
+							{
+								"name": "Price",
+								"value": price,
+								"inline": true
+							}
+						],
+						"author": {
+							"name": "Paranoia",
+							"url": "https://twitter.com/paranoia_v1"
+						},
+						"footer": {
+							"text": "Paranoia | v1.0",
+							"icon_url": "https://pbs.twimg.com/profile_images/1415955135843295233/QbJqhIyh_400x400.jpg"
+						},
+						"thumbnail": {
+							"url": image
+						}
 					}
-				  }
 				]
-			  })
+			})
 		})
-		
+
 	}
 
 
-	async function listingMode(limit,webhookURL){
-		const scrollbox = document.getElementsByClassName('Scrollboxreact__DivContainer-sc-1b04elr-0 ddtCpj EventHistory--container ActivitySearch--event-history-scrollbox')[0].querySelector('.Scrollbox--content')
-
+	async function listingMode(limit, webhookURL) {
+		let foundTarget = false
 		let listings = [...document.getElementsByClassName('EventHistory--row')]
-		while(listings.length < 10){
+		while (listings.length < 5) {
 			listings = [...document.getElementsByClassName('EventHistory--row')]
-			scrollbox.scrollBy(0,250)
 			await new Promise(resolve => setTimeout(resolve, 150));
 		}
-		if(listings.some(el=>{
-			if(el.querySelector('.Price--eth-icon')){
-				const price = el.querySelector('.Price--amount').innerText
-				const timestamp = el.querySelector('div[data-testid=EventTimestamp]').querySelector('span').innerText
-				const name = el.querySelector('.AssetCell--name').innerText
-				const url = el.querySelector('.AssetCell--link').href
-				const image = el.querySelector('.Image--image').src
-				if((timestamp.includes('a minute ago') || timestamp.includes('second') && !checkInStorage(url))){
-					if(Number(price.replaceAll(',','.'))<=Number(limit)){
-						if(webhookURL){	
-							notify(webhookURL,{name,url,price,image})
+		await new Promise(resolve => setTimeout(resolve, 150));
+
+		listings.some(el => {
+			if (el.querySelector('.Price--eth-icon')) {
+				const productData = {
+					price: el.querySelector('.Price--amount').innerText,
+					timestamp: el.querySelector('div[data-testid=EventTimestamp]').querySelector('span').innerText,
+					name: el.querySelector('.AssetCell--name').innerText,
+					url: el.querySelector('.AssetCell--link').href,
+					image: el.querySelector('.Image--image').src,
+				}
+				if (((productData.timestamp.includes('a minute ago') || productData.timestamp.includes('second') )&& !checkInStorage(productData.url))) {
+					if (Number(productData.price.replaceAll(',', '.')) <= Number(limit)) {
+						if (webhookURL) {
+							notify(webhookURL, { name: productData.name, url: productData.url, price: productData.price, image: productData.image })
 						}
-						el.querySelector('.paranoia-button').click()
+						checkUntilFound('.paranoia-button')
+						foundTarget = true
 						return true
 					}
 				}
 
 			}
-	
 
-		})){return}
-		
+		})
 
-		setTimeout(function(){
-			window.location.reload()
-		}, 1500);
-
+		if (!foundTarget) {
+			setTimeout(function () {
+				window.location.reload()
+			}, 1500);
+		}
 
 	}
 	const sheet = document.createElement('style')
@@ -343,13 +349,13 @@ function runAll(){
 		color: rgb(229, 232, 235);
 	}`;
 	document.head.appendChild(sheet);
-	window.addEventListener("load", function(){
+	window.addEventListener("load", function () {
 
 
-		try{
+		try {
 			const config = JSON.parse(atob(window.location.hash.substr(1)));
-			listingMode(config.limit,config.webhook)
-		}catch(e){}
+			listingMode(config.limit, config.webhook)
+		} catch (e) { }
 
 
 	});

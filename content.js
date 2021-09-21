@@ -200,7 +200,7 @@ function runAll(){
 		if (itemCache) {
 			itemCache = JSON.parse(itemCache)
 			const cachedItem = itemCache[item]
-			if (cachedItem && (Date.now() - cachedItem) < 240000) {
+			if (cachedItem && ((Date.now() - cachedItem) < 240000)) {
 				addToStorage(item)
 				return true
 			}
@@ -270,7 +270,10 @@ function runAll(){
 					url: el.querySelector('.AssetCell--link').href,
 					image: el.querySelector('.Image--image').src,
 				}
-				if (((productData.timestamp.includes('a minute ago') || productData.timestamp.includes('second') )&& !checkInStorage(productData.url))) {
+				if(checkInStorage(productData.url)){
+					return
+				}
+				if ((productData.timestamp.includes('a minute ago') || productData.timestamp.includes('second') )) {
 					if (Number(productData.price.replaceAll(',', '.')) <= Number(limit)) {
 						if (webhookURL) {
 							notify(webhookURL, { name: productData.name, url: productData.url, price: productData.price, image: productData.image })

@@ -22,7 +22,7 @@ for(let i = 1;i<5;i++){
 
 
 function checkUpdate(){
-    fetch('http://localhost:3000/latestscript').then(async (r)=>{
+    fetch('https://paranoia-auth-server.herokuapp.com/latestscript').then(async (r)=>{
         
         const data = await r.json()
         chrome.storage.local.set({latestscript:data.script}, function() {

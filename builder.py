@@ -71,7 +71,7 @@ for file in files:
             
                 if(sys.argv[-1] == 'prod'):
                     print('replacing api queries')
-                    lines = lines.replace('http://localhost:3000/', 'https://paranoia-auth-server.herokuapp.com/')
+                    lines = lines.replace('http://localhost:3000/', 'https://api.paranoia.software/')
                 lines = lines.split('//linesplit')
 
                 final = ''

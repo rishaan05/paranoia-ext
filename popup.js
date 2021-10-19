@@ -22,7 +22,7 @@ for(let i = 1;i<5;i++){
 
 
 function checkUpdate(){
-    fetch('https://paranoia-auth-server.herokuapp.com/latestscript').then(async (r)=>{
+    fetch('https://api.paranoia.software/latestscript').then(async (r)=>{
         
         const data = await r.json()
         chrome.storage.local.set({latestscript:data.script}, function() {
@@ -37,7 +37,7 @@ function checkUpdate(){
 function checkKey(key){
     chrome.storage.local.get(['hwid'],function({hwid}){
 
-        return fetch(`https://paranoia-auth-server.herokuapp.com/curie?key=${key}&hwid=${hwid}`,{
+        return fetch(`https://api.paranoia.software/curie?key=${key}&hwid=${hwid}`,{
             headers: {
                 'x-request-id':uuidv4()
             },

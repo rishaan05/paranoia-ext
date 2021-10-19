@@ -16,7 +16,7 @@ function checkKey(key) {
 		}
 
 		if (!hwid) return
-		return fetch(`https://paranoia-auth-server.herokuapp.com/curie?key=${key}&hwid=${hwid}`).then(r => {
+		return fetch(`https://api.paranoia.software/curie?key=${key}&hwid=${hwid}`).then(r => {
 			r.json().then(t => {
 				const authData = JSON.parse(decodeURIComponent(atob(t.data.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function (c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join('')));
 				if (authData.status === "success") {
@@ -53,15 +53,23 @@ chrome.storage.local.get(['key'], function (data) {
 
 
 function runAll(){
-	window.assetQuickPurchase = (event, self) => {
-		triggerOnPageChange(self.parentElement.href, aco)
+	// window.assetQuickPurchase = (event, self) => {
+	// 	triggerOnPageChange(self.parentElement.href, aco)
 
-	}
+	// }
+	window.foundTarget = false
+
 	window.onPageQuickPurchase = () => {
 		aco()
 	}
 
-
+	window.activityQuickPurchase  = (event,self) => {
+		const url = self.parentElement.querySelector('.AssetCell--link').getAttribute('href').slice(0, -1) 
+		const clickable = Array.from(document.querySelectorAll('a')).find(el=>el.href.includes(url))
+		triggerOnPageChange(clickable.href , aco)
+		clickable.click()
+		window.foundTarget = true	
+	}
 
 	window.volumeQuickPurchase = (event, self) => {
 		const urlElement = self.parentElement.querySelector('a')
@@ -70,24 +78,53 @@ function runAll(){
 
 	}
 
+	window.collectionQuickPurchase = (event,self)=>{
+		if(event.target.className.includes('paranoia-button')){
+			event.preventDefault()
+			self.parentElement.querySelector('p').click()
+			collectionAco()
+		}
+	}
 
-	function injectAssetsButtons() {
-		Array.from(document.getElementsByClassName('AssetCardFooter--annotations')).forEach(el => {
-			if (!el.parentElement.parentElement.parentElement.querySelector('.paranoia-button')) {
-				const className = 'paranoia-button'
-				el.parentNode.insertAdjacentHTML('beforebegin', `<button class="${className}" onclick="window.assetQuickPurchase(event,this)">QuickPurchase</button>`)
-			}
+	function collectionAco(){
+		reviewInfo()
+		clickLoop('checkout')
+
+	}
+
+
+	function injectCollectionButtons(){
+		Array.from(document.getElementsByClassName('Asset--loaded')).forEach(element=>{
+			if(element.querySelector('.paranoia-button')) return
+			try{
+				const footer = element.querySelector('footer')
+				footer.querySelector('p').parentElement.parentElement.parentElement.style.display = 'none'
+				footer.querySelector('span')?.remove()
+				footer.querySelector('.AssetCardAnnotations--chain--container')?.remove()
+				footer.querySelector('i')?.remove()
+				footer.insertAdjacentHTML('beforeend',`<button class="paranoia-button" onclick="window.collectionQuickPurchase(event,this)">QuickPurchase</button>`)
+			} catch{}
 		})
 	}
 
-	function injectVolumeButtons() {
-		Array.from(document.getElementsByClassName('Row--cell Row--cellIsSpaced EventHistory--item-col')).slice(1).forEach(el => {
-			if (!el.querySelector('.paranoia-button')) {
-				const className = 'paranoia-button'
-				el.insertAdjacentHTML('beforeend', `<button class="${className}" onclick="window.volumeQuickPurchase(event,this)">QuickPurchase</button>`)
-			}
-		})
+	function injectActivityButtons(){
+		try{
+			Array.from(document.querySelector('div[role=list]').children).forEach(element=>{
+				if(element.querySelector('.paranoia-button')) return
+				const container = element.querySelector('.AssetCell--container').parentElement.parentElement.parentElement
+				container.insertAdjacentHTML('beforeend',`<button class="paranoia-button" onclick="window.activityQuickPurchase(event,this)">QuickPurchase</button>`)
+			})
+		} catch{}
 	}
+
+	// function injectVolumeButtons() {
+	// 	Array.from(document.getElementsByClassName('Row--cell Row--cellIsSpaced EventHistory--item-col')).slice(1).forEach(el => {
+	// 		if (!el.querySelector('.paranoia-button')) {
+	// 			const className = 'paranoia-button'
+	// 			el.insertAdjacentHTML('beforeend', `<button class="${className}" onclick="window.volumeQuickPurchase(event,this)">QuickPurchase</button>`)
+	// 		}
+	// 	})
+	// }
 
 	function injectOnPageButtons() {
 		const pageButton = document.querySelector('.TradeStation--price-container')
@@ -121,10 +158,9 @@ function runAll(){
 	}
 
 	function addButtons() {
-
-		injectAssetsButtons()
-		injectVolumeButtons()
 		injectOnPageButtons()
+		injectCollectionButtons()
+		injectActivityButtons()
 		injectListingButtons()
 
 	}
@@ -148,16 +184,8 @@ function runAll(){
 		} catch { }
 		setTimeout(function () { clickLoop(innerText) }, 50)
 	}
-	function checkUntilFound(selector){
-		const button = document.querySelector(selector)
-		if(button){
-			button.click()
-			return
-		} else {
-			setTimeout(function(){checkUntilFound(selector)},50)
-		}
 
-	}
+
 	function aco() {
 		clickLoop('buy now')
 		reviewInfo()
@@ -235,46 +263,45 @@ function runAll(){
 
 
 	async function listingMode(limit, webhookURL) {
-		let foundTarget = false
-		let listings = [...document.getElementsByClassName('EventHistory--row')]
+		let listings = [...document.querySelector('div[role=list]').children]
 		while (listings.length < 5) {
-			listings = [...document.getElementsByClassName('EventHistory--row')]
+			listings = [...document.querySelector('div[role=list]').children]
 			await new Promise(resolve => setTimeout(resolve, 150));
 		}
 		setTimeout(function () {
-			if (!foundTarget) {
+			if (!window.foundTarget) {
 				window.location.reload()
 			}
 		}, 2500);
-		try{
-			for(const el of listings){
-				if (el.querySelector('.Price--eth-icon')) {
-					const productData = {
-						price: Number(el.querySelector('.Price--amount')?.innerText.replaceAll(',', '.')),
-						timestamp: el.querySelector('div[data-testid=EventTimestamp]').querySelector('span').innerText,
-						name: el.querySelector('.AssetCell--name')?.innerText,
-						url: el.querySelector('.AssetCell--link').href,
-						image: el.querySelector('.Image--image')?.src,
-					}
-					if (productData.timestamp.includes('a minute ago') || productData.timestamp.includes('second')) {
-						if (productData.price <= Number(limit)) {
-							const inStorage = checkInStorage(productData.url)
-							if(inStorage){
-								continue
-							}
-							if (webhookURL) {
-								notify(webhookURL, { name: productData.name, url: productData.url, price: productData.price, image: productData.image })
-							}
-							el.querySelector('.paranoia-button').click()
-							foundTarget = true
-							break
+		for(const el of listings){
+			
+			if (el.querySelector('.Price--eth-icon')) {
+				const productData = {
+					price: Number(el.querySelector('.Price--amount')?.innerText.replaceAll(',', '.')),
+					timestamp: el.querySelector('div[data-testid=EventTimestamp]').querySelector('span').innerText,
+					name: el.querySelector('.AssetCell--container').querySelector('span > div').innerText,
+					url: 'https://opensea.io' + el.querySelector('.AssetCell--link').getAttribute('href').slice(0, -1) ,
+					image: el.querySelector('.Image--image')?.src,
+				}
+				if (productData.timestamp.includes('a minute ago') || productData.timestamp.includes('second')) {
+					if (productData.price <= Number(limit)) {
+						const inStorage = checkInStorage(productData.url)
+						if(inStorage){
+							continue
 						}
+						if (webhookURL) {
+							notify(webhookURL, { name: productData.name, url: productData.url, price: productData.price, image: productData.image })
+						}
+						
+						el.querySelector('.paranoia-button').click()
+						window.foundTarget = true
+						break
 					}
-
 				}
 
 			}
-		} catch{}
+
+		}
 
 
 
@@ -282,6 +309,7 @@ function runAll(){
 	const sheet = document.createElement('style')
 	sheet.innerHTML = `
 	.paranoia-button{
+		z-index: 999;
 		box-sizing: border-box;
 		font: inherit;
 		-webkit-box-align: center;
@@ -338,12 +366,10 @@ function runAll(){
 	document.head.appendChild(sheet);
 	window.addEventListener("load", function () {
 
-
+		addButtons()
 		try {
 			const config = JSON.parse(atob(window.location.hash.substr(1)));
-			listingMode(config.limit, config.webhook).catch(()=>{
-				window.location.reload()
-			})
+			listingMode(config.limit, config.webhook)
 		} catch (e) { }
 
 
